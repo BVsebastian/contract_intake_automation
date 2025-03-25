@@ -13,38 +13,75 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
-def run():
+def process_contracts():
     """
-    Run the crew with contract processing inputs.
+    Process all contract PDFs in the contracts directory.
     """
-    if len(sys.argv) < 3:
-        print("Usage: python main.py <contract_path> <contract_name>")
+    # Get path to contracts directory
+    contracts_dir = Path(__file__).parent / 'contracts'
+    
+    if not contracts_dir.exists():
+        print(f"Error: Contracts directory not found: {contracts_dir}")
         sys.exit(1)
 
-    contract_path = sys.argv[1]
-    contract_name = sys.argv[2]
+    # Get all PDF files in the contracts directory
+    contract_files = list(contracts_dir.glob('*.pdf'))
+    
+    if not contract_files:
+        print(f"Error: No PDF files found in {contracts_dir}")
+        sys.exit(1)
 
-    # Validate contract file exists and is PDF
-    path = Path(contract_path)
-    if not path.exists():
-        print(f"Error: Contract file not found: {contract_path}")
-        sys.exit(1)
-    if path.suffix.lower() != '.pdf':
-        print(f"Error: Contract file must be a PDF: {contract_path}")
-        sys.exit(1)
-    
-    inputs = {
-        'contract_path': str(path),
-        'contract_name': contract_name
-    }
-    
-    try:
-        ContractIntakeAgents().crew().kickoff(inputs=inputs)
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
+    print(f"\nFound {len(contract_files)} contract(s) to process")
+    print("=" * 50)
+
+    # Process each contract
+    successful = []
+    failed = []
+
+    for contract_path in contract_files:
+        try:
+            # Get contract name without .pdf extension
+            contract_name = contract_path.stem
+            
+            print(f"\nProcessing: {contract_path.name}")
+            print("-" * 30)
+
+            # Create inputs for the crew
+            inputs = {
+                'contract_path': str(contract_path),
+                'contract_name': contract_name
+            }
+            
+            # Process the contract
+            ContractIntakeAgents().crew().kickoff(inputs=inputs)
+            
+            successful.append(contract_path.name)
+            print(f"✔ Successfully processed: {contract_path.name}")
+            
+        except Exception as e:
+            failed.append((contract_path.name, str(e)))
+            print(f"❌ Error processing {contract_path.name}: {e}")
+            continue
+
+    # Print summary
+    print("\n" + "=" * 50)
+    print("Processing Summary:")
+    print(f"Total contracts: {len(contract_files)}")
+    print(f"Successful: {len(successful)}")
+    print(f"Failed: {len(failed)}")
+
+    if successful:
+        print("\nSuccessfully processed:")
+        for contract in successful:
+            print(f"✔ {contract}")
+
+    if failed:
+        print("\nFailed to process:")
+        for contract, error in failed:
+            print(f"❌ {contract} - {error}")
 
 if __name__ == "__main__":
-    run()
+    process_contracts()
 
 # def train():
 #     """

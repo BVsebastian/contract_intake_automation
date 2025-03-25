@@ -69,22 +69,38 @@ contract_validator_task:
        - Group any missing fields by category
        
     3. Identify Risk Patterns:
-       - Auto-renewal clauses in Renewal Terms
-       - Vague or missing termination language
-       - Notice periods less than 30 days
-       - Undefined/unclear payment terms
+       - Auto-Renewal Risk Assessment:
+         * Check if Renewal Terms contains "auto" or "automatic" renewal language
+         * If auto-renewal exists, verify Notice Period for Non-Renewal
+         * Flag as risk if:
+           - Notice period is missing/not specified
+           - Notice period is less than 30 days
+           - Notice period format is unclear
+       - Termination Risk Assessment:
+         * Check for vague or missing termination language
+         * Verify notice periods are clearly specified
+         * Flag if notice period is less than 30 days
+       - Payment Terms Risk Assessment:
+         * Check for undefined/unclear payment terms
+         * Verify payment schedule and method are specified
+         * Flag any ambiguous financial terms
        
     4. Generate Recommendations:
-       - Specific actions for any truly missing fields
-       - Risk mitigation suggestions
-       - Compliance improvements
+       - For auto-renewal risks:
+         * Suggest extending notice period to minimum 30 days
+         * Recommend clarifying renewal process
+         * Propose manual renewal if notice period can't be extended
+       - For other identified risks:
+         * Specific actions for missing fields
+         * Risk mitigation suggestions
+         * Compliance improvements
 
     5. Create Validation Report:
        Use FileWriterTool to save a structured JSON report as 'output/{contract_name}_validation_report.json'
        that includes:
        - is_valid: true if all required fields have values and no risks found
        - missing_fields: array of fields that are empty or "Not Specified"
-       - risk_flags: array of identified risks
+       - risk_flags: array of identified risks, with detailed context
        - recommendations: array of specific recommendations
 
     Required Fields by Category:
@@ -150,6 +166,12 @@ notification_specialist_task:
     Status: [Complete status message based on validation]
 
     ---
+
+    [If contract is valid with no issues:]
+    VALIDATION RESULT:
+    - All required fields present
+    - No risks identified
+    - No recommendations needed
 
     [If missing fields exist:]
     MISSING FIELDS:
