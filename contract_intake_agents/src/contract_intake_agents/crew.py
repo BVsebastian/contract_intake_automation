@@ -25,18 +25,23 @@ class ContractIntakeAgents():
     # Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
-    # Update output_dir to use project root
     output_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))) / 'output'
 
     # If you would like to add tools to your agents, you can learn more about it here:
     # https://docs.crewai.com/concepts/agents#agent-tools
 
     def __init__(self):
-        pass  # Remove directory creation from here
+        pass
 
     @classmethod
-    def ensure_output_dir(cls):
-        cls.output_dir.mkdir(exist_ok=True)
+    def get_contract_output_dir(cls, contract_name: str) -> Path:
+        """Get the output directory for a specific contract."""
+        # Ensure contract_name is a string and not a template
+        if isinstance(contract_name, str) and '{' not in contract_name:
+            contract_dir = cls.output_dir / contract_name
+            contract_dir.mkdir(parents=True, exist_ok=True)
+            return contract_dir
+        return cls.output_dir  # Fallback to main output dir if invalid
 
     @agent
     def contract_analyst(self) -> Agent:
@@ -78,8 +83,8 @@ class ContractIntakeAgents():
         return Task(
             config=self.tasks_config['contract_analyst_task'],
             output_files=[
-                str(self.output_dir / '{contract_name}_extracted_contract_details.json'),
-                str(self.output_dir / '{contract_name}_extracted_contract_details.xlsx')
+                'output/{contract_name}/{contract_name}_extracted_contract_details.json',
+                'output/{contract_name}/{contract_name}_extracted_contract_details.xlsx'
             ]
         )
 
@@ -87,14 +92,14 @@ class ContractIntakeAgents():
     def contract_validator_task(self) -> Task:
         return Task(
             config=self.tasks_config['contract_validator_task'],
-            output_file=str(self.output_dir / '{contract_name}_validation_report.json')
+            output_file='output/{contract_name}/{contract_name}_validation_report.json'
         )
 
     @task
     def notification_specialist_task(self) -> Task:
         return Task(
             config=self.tasks_config['notification_specialist_task'],
-            output_file=str(self.output_dir / '{contract_name}_email_summary.txt')
+            output_file='output/{contract_name}/{contract_name}_email_summary.txt'
         )
 
     @crew

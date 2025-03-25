@@ -4,18 +4,9 @@ contract_analyst_task:
     Use the PDFSearchTool to search through the contract document at {contract_path}.
     For each field, use the tool to find the most relevant section and extract the information.
 
-    1. Save the extracted data:
-       - Use the FileWriterTool to save the JSON data
-         Save as 'output/{contract_name}_extracted_contract_details.json'
-       
-       2. Create Excel file:
-          - Use the ExcelWriterTool to create a formatted Excel file
-          - Save as 'output/{contract_name}_extracted_contract_details.xlsx'
-          - Include columns: Contract Section, Field Name, Value
-          - Apply proper formatting and column widths
+    1. Save the extracted data using FileWriterTool with these required fields:
 
-    Fields to extract:
-    Contract Basics:
+    Contract Basics section:
     - Contract Title
     - Contract Reference Number
     - Contract Type
@@ -23,7 +14,7 @@ contract_analyst_task:
     - Expiration Date
     - Contract Status
 
-    Parties Information:
+    Parties Information section:
     - Client Company Name
     - Client Address
     - Vendor Company Name
@@ -31,37 +22,52 @@ contract_analyst_task:
     - Primary Contact (Client)
     - Primary Contact (Vendor)
 
-    Financial Terms:
+    Financial Terms section:
     - Total Contract Value
     - Payment Schedule
     - Payment Terms
     - Currency
     - Payment Method
 
-    Terms & Termination:
-    - Termination Clause (including notice period and allowed reasons)
-    - Renewal Terms (manual/auto-renewal and cancellation requirements)
+    Terms & Termination section:
+    - Termination Clause
+    - Renewal Terms
     - Notice Period for Termination
     - Notice Period for Non-Renewal
-    - Contract Duration (must align with start/end dates)
+    - Contract Duration
+
+    Important Rules:
+    - Save as valid JSON with these exact section and field names
+    - Use "Not Specified" for missing information
+    - Write ONLY the JSON data to the file
+    - No explanatory text or metadata in the output file
+
+    2. Create Excel file using ExcelWriterTool:
+       - Create a new Excel file with proper formatting
+       - Include columns: Contract Section, Field Name, Value
+       - Apply proper column widths and formatting
+       - Match the JSON structure exactly
+       - Save as output/{contract_name}/{contract_name}_extracted_contract_details.xlsx
+
+    Save outputs as:
+    - JSON: output/{contract_name}/{contract_name}_extracted_contract_details.json
+    - Excel: output/{contract_name}/{contract_name}_extracted_contract_details.xlsx
 
   expected_output: >
-    Contract details saved in multiple formats:
-    - JSON file for structured data
-    - Excel file with proper formatting and layout
-    Each field should be populated with either the extracted value or marked as 
-    "Not Specified" if not found in the contract.
+    output/{contract_name}/{contract_name}_extracted_contract_details.json:
+    Raw JSON data containing all contract fields organized in sections.
+
+    output/{contract_name}/{contract_name}_extracted_contract_details.xlsx:
+    Excel spreadsheet with contract data in tabular format.
+
   agent: contract_analyst
 
 contract_validator_task:
   description: >
-    Review the extracted contract data from output/{contract_name}_extracted_contract_details.json
-    and perform a thorough validation:
+    Review the extracted contract data and perform validation:
 
-    1. First read and parse the extracted data file:
-       - Read the JSON file from the output directory
-       - Parse all sections: Contract Basics, Parties Information, etc.
-       - Compare against the required fields list
+    1. First read the contract details using FileReaderTool:
+       Read and parse: output/{contract_name}/{contract_name}_extracted_contract_details.json
        
     2. Check for Missing Fields:
        - Compare each field in the JSON against required fields
@@ -96,112 +102,79 @@ contract_validator_task:
          * Compliance improvements
 
     5. Create Validation Report:
-       Use FileWriterTool to save a structured JSON report as 'output/{contract_name}_validation_report.json'
-       that includes:
-       - is_valid: true if all required fields have values and no risks found
-       - missing_fields: array of fields that are empty or "Not Specified"
-       - risk_flags: array of identified risks, with detailed context
-       - recommendations: array of specific recommendations
+       Use FileWriterTool to write the validation results in JSON format.
+       The JSON must contain four fields:
+       - is_valid: true or false
+       - missing_fields: an array of any fields marked "Not Specified"
+       - risk_flags: an array of risk descriptions
+       - recommendations: an array of mitigation steps
 
-    Required Fields by Category:
-    Contract Basics:
-    - Contract Title
-    - Contract Reference Number
-    - Contract Type
-    - Effective Date
-    - Expiration Date
-    - Contract Status
+       The output must be valid JSON and should not include any additional explanation or metadata.
+       Important:
+       - Write ONLY the raw JSON data
+       - No explanatory text or metadata
+       - No file paths or success messages
 
-    Parties Information:
-    - Client Company Name
-    - Client Address
-    - Vendor Company Name
-    - Vendor Address
-    - Primary Contact (Client)
-    - Primary Contact (Vendor)
-
-    Financial Terms:
-    - Total Contract Value
-    - Payment Schedule
-    - Payment Terms
-    - Currency
-    - Payment Method
-
-    Terms & Termination:
-    - Termination Clause
-    - Renewal Terms
-    - Notice Period for Termination
-    - Notice Period for Non-Renewal
-    - Contract Duration
+       Save validation report as:
+       output/{contract_name}/{contract_name}_validation_report.json
 
   expected_output: >
-    A structured JSON validation report containing:
-    - Overall validity status (is_valid)
-    - List of any missing required fields
-    - List of identified risk flags
-    - Specific recommendations for resolution
-    The report must be machine-readable and properly formatted.
+    output/{contract_name}/{contract_name}_validation_report.json:
+    Raw JSON data containing validation results with no metadata or explanatory text.
+
   agent: contract_validator
   context:
     - contract_analyst_task
 
 notification_specialist_task:
   description: >
-    Create a professional email summary of the contract analysis using data from:
-    - Contract details: output/{contract_name}_extracted_contract_details.json
-    - Validation results: output/{contract_name}_validation_report.json
+    Create a professional email summary using data from two sources:
 
-    Save the summary as 'output/{contract_name}_email_summary.txt'
+    1. Read contract details using FileReaderTool:
+       output/{contract_name}/{contract_name}_extracted_contract_details.json
 
-    Format the summary as follows:
+    2. Read validation results using FileReaderTool:
+       output/{contract_name}/{contract_name}_validation_report.json
 
-    CONTRACT SUMMARY: [Contract Title]
-
-    Vendor: [Vendor Name]
-    Client: [Client Name]
-    Start Date: [Effective Date]
-    End Date: [Expiration Date]
-    Total Contract Value: [Value with Currency]
-
-    Status: [Complete status message based on validation]
-
+    3. Create summary using this exact format:
+    CONTRACT SUMMARY: [Contract Title from contract details]
+    Vendor: [Vendor Company Name from contract details]
+    Client: [Client Company Name from contract details]
+    Start Date: [Effective Date from contract details]
+    End Date: [Expiration Date from contract details]
+    Total Contract Value: [Total Contract Value from contract details]
+    Status: [Based on is_valid from validation report]
     ---
+    [Include these sections only if present in validation report:]
 
-    [If contract is valid with no issues:]
-    VALIDATION RESULT:
-    - All required fields present
-    - No risks identified
-    - No recommendations needed
-
-    [If missing fields exist:]
     MISSING FIELDS:
-    - [List each missing field]
+    - [Each field from missing_fields array]
 
-    [If risks exist:]
     IDENTIFIED RISKS:
-    - [List each risk flag]
+    - [Each risk from risk_flags array]
 
-    [If recommendations exist:]
     RECOMMENDATIONS:
-    - [List each recommendation]
-
+    - [Each item from recommendations array]
     ---
-
     Generated by Contract Processing AI Assistant
 
-    Notes:
-    - Only include sections that have content
-    - Use clear business language
-    - Format with proper spacing and bullet points
-    - Status should be either:
+    Important Rules:
+    - Use actual values from JSON files, not placeholders
+    - Follow exact spacing shown above
+    - Include sections only if they have content
+    - Status must be exactly one of:
       "This contract appears complete and compliant."
-      or
       "This contract requires attention due to missing information or risks."
+    - No metadata or file paths in the output
+    - No explanatory text or casual language
+
+    Save ONLY the formatted summary text as:
+    output/{contract_name}/{contract_name}_email_summary.txt
 
   expected_output: >
-    A professionally formatted email summary in plain text (.txt), highlighting key
-    contract details, any issues found, and specific recommendations. The summary
-    should be immediately actionable by business stakeholders.
+    output/{contract_name}/{contract_name}_email_summary.txt:
+    Plain text email summary with no metadata or file path information.
+
   agent: notification_specialist
   context:
     - contract_validator_task

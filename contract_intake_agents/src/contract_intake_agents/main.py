@@ -44,6 +44,7 @@ def process_contracts():
             contract_name = contract_path.stem
             
             print(f"\nProcessing: {contract_path.name}")
+            print(f"Output folder: output/{contract_name}/")
             print("-" * 30)
 
             # Create inputs for the crew
@@ -57,6 +58,7 @@ def process_contracts():
             
             successful.append(contract_path.name)
             print(f"✔ Successfully processed: {contract_path.name}")
+            print(f"✔ Output saved to: output/{contract_name}/")
             
         except Exception as e:
             failed.append((contract_path.name, str(e)))
