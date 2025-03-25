@@ -3,7 +3,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from dotenv import load_dotenv
 from pathlib import Path
-from crewai_tools import PDFSearchTool, FileWriterTool
+from crewai_tools import PDFSearchTool, FileWriterTool, FileReadTool
 import sys
 from tools.excel_writer_tool import ExcelWriterTool
 
@@ -25,7 +25,8 @@ class ContractIntakeAgents():
     # Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
-    output_dir = Path(__file__).parent / 'output'  # Class variable
+    # Update output_dir to use project root
+    output_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))) / 'output'
 
     # If you would like to add tools to your agents, you can learn more about it here:
     # https://docs.crewai.com/concepts/agents#agent-tools
@@ -51,15 +52,21 @@ class ContractIntakeAgents():
 
     @agent
     def contract_validator(self) -> Agent:
+        file_writer_tool = FileWriterTool()
+        file_read_tool = FileReadTool()
         return Agent(
             config=self.agents_config['contract_validator'],
+            tools=[file_writer_tool, file_read_tool],
             verbose=True
         )
 
     @agent
     def notification_specialist(self) -> Agent:
+        file_writer_tool = FileWriterTool()
+        file_read_tool = FileReadTool()
         return Agent(
             config=self.agents_config['notification_specialist'],
+            tools=[file_writer_tool, file_read_tool],
             verbose=True
         )
 
@@ -71,9 +78,8 @@ class ContractIntakeAgents():
         return Task(
             config=self.tasks_config['contract_analyst_task'],
             output_files=[
-                'output/{contract_name}_extracted_contract_details.json',
-                'output/{contract_name}_extracted_contract_details.csv',
-                'output/{contract_name}_extracted_contract_details.xlsx'
+                str(self.output_dir / '{contract_name}_extracted_contract_details.json'),
+                str(self.output_dir / '{contract_name}_extracted_contract_details.xlsx')
             ]
         )
 
@@ -81,14 +87,14 @@ class ContractIntakeAgents():
     def contract_validator_task(self) -> Task:
         return Task(
             config=self.tasks_config['contract_validator_task'],
-            output_file='output/{contract_name}_validated_contract_data.json'
+            output_file=str(self.output_dir / '{contract_name}_validation_report.json')
         )
 
     @task
     def notification_specialist_task(self) -> Task:
         return Task(
             config=self.tasks_config['notification_specialist_task'],
-            output_file='output/{contract_name}_email_summary.txt'
+            output_file=str(self.output_dir / '{contract_name}_email_summary.txt')
         )
 
     @crew

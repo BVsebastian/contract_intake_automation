@@ -1,0 +1,10 @@
+{
+  "is_valid": true,
+  "missing_fields": [],
+  "risk_flags": [
+    "Auto-renewal clause requires monitoring to avoid unintended renewals."
+  ],
+  "recommendations": [
+    "Monitor the renewal terms closely to ensure either party can exercise the non-renewal option without being locked into extended terms."
+  ]
+}
