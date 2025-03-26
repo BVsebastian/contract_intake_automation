@@ -5,18 +5,17 @@ from pathlib import Path
 from datetime import datetime
 
 from crew import ContractIntakeAgents
+from rpa_utils import download_contracts, upload_outputs
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
-# This main file is intended to be a way for you to run your
-# crew locally, so refrain from adding unnecessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
-
 def process_contracts():
-    """
-    Process all contract PDFs in the contracts directory.
-    """
+    """Process all contract PDFs in the contracts directory."""
+    # First execute the download bot
+    if not download_contracts():
+        print("❌ Failed to download contracts. Exiting.")
+        sys.exit(1)
+
     # Get path to contracts directory
     contracts_dir = Path(__file__).parent / 'contracts'
     
@@ -40,20 +39,17 @@ def process_contracts():
 
     for contract_path in contract_files:
         try:
-            # Get contract name without .pdf extension
             contract_name = contract_path.stem
             
             print(f"\nProcessing: {contract_path.name}")
             print(f"Output folder: output/{contract_name}/")
             print("-" * 30)
 
-            # Create inputs for the crew
             inputs = {
                 'contract_path': str(contract_path),
                 'contract_name': contract_name
             }
             
-            # Process the contract
             ContractIntakeAgents().crew().kickoff(inputs=inputs)
             
             successful.append(contract_path.name)
@@ -65,7 +61,7 @@ def process_contracts():
             print(f"❌ Error processing {contract_path.name}: {e}")
             continue
 
-    # Print summary
+    # Print processing summary
     print("\n" + "=" * 50)
     print("Processing Summary:")
     print(f"Total contracts: {len(contract_files)}")
@@ -81,6 +77,11 @@ def process_contracts():
         print("\nFailed to process:")
         for contract, error in failed:
             print(f"❌ {contract} - {error}")
+
+    # Finally, execute the upload bot
+    if not upload_outputs():
+        print("❌ Failed to upload outputs to Odoo.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     process_contracts()
