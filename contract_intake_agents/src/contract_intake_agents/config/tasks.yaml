@@ -127,7 +127,7 @@ contract_validator_task:
     - contract_analyst_task
 
 notification_specialist_task:
-  description: >
+  description: |
     Create a professional email summary using data from two sources:
 
     1. Read contract details using FileReaderTool:
@@ -137,7 +137,8 @@ notification_specialist_task:
        output/{contract_name}/{contract_name}_validation_report.json
 
     3. Create summary using this exact format:
-    CONTRACT SUMMARY: [Contract Title from contract details]
+
+    CONTRACT SUMMARY: [Contract Title from contract details] - [COMPLETE/NEEDS REVIEW]
     Vendor: [Vendor Company Name from contract details]
     Client: [Client Company Name from contract details]
     Start Date: [Effective Date from contract details]
@@ -145,6 +146,7 @@ notification_specialist_task:
     Total Contract Value: [Total Contract Value from contract details]
     Status: [Based on is_valid from validation report]
     ---
+
     [Include these sections only if present in validation report:]
 
     MISSING FIELDS:
@@ -160,13 +162,17 @@ notification_specialist_task:
 
     Important Rules:
     - Use actual values from JSON files, not placeholders
-    - Follow exact spacing shown above
+    - For contract title, append:
+      * " - COMPLETE" if is_valid is true and no risks/recommendations exist
+      * " - NEEDS REVIEW" if is_valid is false or any risks/recommendations exist
+    - Follow exact spacing shown above (including blank lines)
     - Include sections only if they have content
     - Status must be exactly one of:
       "This contract appears complete and compliant."
       "This contract requires attention due to missing information or risks."
     - No metadata or file paths in the output
     - No explanatory text or casual language
+    - Preserve all line breaks and spacing exactly as shown in the format above
 
     Save ONLY the formatted summary text as:
     output/{contract_name}/{contract_name}_email_summary.txt

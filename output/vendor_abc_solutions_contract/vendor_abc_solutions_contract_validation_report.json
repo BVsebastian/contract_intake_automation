@@ -1,1 +1,0 @@
-{"is_valid": false, "missing_fields": ["Payment Terms", "Termination Clause", "Notice Period for Termination"], "risk_flags": ["Notice period for auto-renewal is less than 30 days", "Termination clause is not specified"], "recommendations": ["Extend notice period for auto-renewal to minimum 30 days", "Clarify termination clause", "Specify payment terms"]}
